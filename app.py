@@ -74,6 +74,14 @@ if api_key:
 else:
     api_key = st.sidebar.text_input("Ingresa tu Groq API Key (gsk_...)", type="password", help="Obtenla gratis en console.groq.com")
 
+# SELECCIÓN DE MODELO DE VISIÓN
+modelo_vision = st.sidebar.selectbox(
+    "🤖 Modelo de Visión Groq",
+    ["llama-3.2-11b-vision-preview", "llama-3.2-90b-vision-preview"],
+    index=0,
+    help="11B es más rápido; 90B tiene mayor precisión para imágenes con mucho texto o letra pequeña."
+)
+
 # Control de versión para refrescar formulario
 if "form_version" not in st.session_state:
     st.session_state["form_version"] = 0
@@ -229,7 +237,7 @@ if menu == "🧮 Crear Presupuesto":
         elif not (uploaded_image or email_text or web_url):
             st.warning("⚠️ Debes proporcionar al menos una fuente de datos.")
         else:
-            with st.spinner("Analizando información con IA (Groq)..."):
+            with st.spinner(f"Analizando información con {modelo_vision}..."):
                 try:
                     client = Groq(api_key=api_key)
                     
@@ -266,7 +274,7 @@ if menu == "🧮 Crear Presupuesto":
                         })
 
                     completion = client.chat.completions.create(
-                        model="llama-3.2-11b-vision-instruct",
+                        model=modelo_vision,
                         messages=[{"role": "user", "content": messages_content}],
                         temperature=0.1,
                         response_format={"type": "json_object"}
