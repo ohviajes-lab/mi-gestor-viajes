@@ -1,11 +1,11 @@
 import json
 import io
 import sqlite3
+import base64
 import streamlit as st
 import pandas as pd
 from PIL import Image
-from google import genai
-from google.genai import types
+from groq import Groq
 import openpyxl
 from openpyxl.styles import Font, PatternFill
 from openpyxl.utils import get_column_letter
@@ -61,7 +61,18 @@ menu = st.sidebar.radio("Navegación", ["🧮 Crear Presupuesto", "📜 Historia
 
 st.sidebar.markdown("---")
 st.sidebar.header("⚙️ Configuración")
-api_key = st.sidebar.text_input("Ingresa tu Gemini API Key", type="password", help="Obtenla gratis en Google AI Studio")
+
+# DETECCIÓN AUTOMÁTICA DE API KEY DE GROQ
+api_key = ""
+if "GROQ_API_KEY" in st.secrets:
+    api_key = st.secrets["GROQ_API_KEY"]
+
+if api_key:
+    st.sidebar.success("🔑 API Key cargada automáticamente")
+    user_key = st.sidebar.text_input("Groq API Key (opcional si deseas cambiarla)", value=api_key, type="password")
+    api_key = user_key
+else:
+    api_key = st.sidebar.text_input("Ingresa tu Groq API Key (gsk_...)", type="password", help="Obtenla gratis en console.groq.com")
 
 # Control de versión para refrescar formulario
 if "form_version" not in st.session_state:
@@ -212,66 +223,66 @@ if menu == "🧮 Crear Presupuesto":
     with col_right:
         email_text = st.text_area("📧 Texto de Correo Electrónico / Notas", height=140, placeholder="Pega aquí el contenido del mail de la agencia...")
 
-    if st.button("🔍 Extraer Datos con IA (Gemini)"):
+    if st.button("🔍 Extraer Datos con IA (Groq)"):
         if not api_key:
-            st.error("⚠️ Por favor ingresa tu API Key de Gemini en el panel lateral.")
+            st.error("⚠️ Por favor ingresa tu API Key de Groq (gsk_...) en el panel lateral o en Secrets.")
         elif not (uploaded_image or email_text or web_url):
             st.warning("⚠️ Debes proporcionar al menos una fuente de datos.")
         else:
-            with st.spinner("Analizando información con IA..."):
+            with st.spinner("Analizando información con IA (Groq)..."):
                 try:
-                    client = genai.Client(api_key=api_key)
-                    contents = []
-                    if uploaded_image:
-                        contents.append(Image.open(uploaded_image))
+                    client = Groq(api_key=api_key)
                     
-                    prompt = f"""
-                    Analiza la información de viaje y responde ÚNICAMENTE con un JSON válido con la estructura:
+                    messages_content = []
+                    
+                    prompt_text = f"""
+                    Analiza la información de viaje y responde ÚNICAMENTE con un objeto JSON sin formato Markdown adicional (sin ```json ... ```), con esta estructura exacta:
                     {{
-                        "destino": "Nombre del destino", "fecha_salida": "Fecha o mes", "duracion": "Días/noches",
-                        "operador": "Agencia/Operador", "precio_base": float, "impuestos_aereo": float,
-                        "cuotas_cant": int, "cuota_monto": float, "notas": "Resumen"
+                        "destino": "Nombre del destino",
+                        "fecha_salida": "Fecha o mes",
+                        "duracion": "Días/noches",
+                        "operador": "Agencia/Operador",
+                        "precio_base": 0.0,
+                        "impuestos_aereo": 0.0,
+                        "cuotas_cant": 0,
+                        "cuota_monto": 0.0,
+                        "notas": "Resumen"
                     }}
-                    Si no hay dato, usa 0.0. Web: {web_url} | Mail: {email_text}
+                    Si no hay un dato numérico, usa 0.0.
+                    Información adicional -> Web: {web_url} | Mail: {email_text}
                     """
-                    contents.append(prompt)
+                    
+                    messages_content.append({"type": "text", "text": prompt_text})
 
-                    # Modelos a intentar en orden de preferencia
-                    modelos_a_probar = ["gemini-2.5-flash", "gemini-2.0-flash"]
-                    response = None
-                    last_error = None
+                    if uploaded_image:
+                        img_bytes = uploaded_image.getvalue()
+                        base64_image = base64.b64encode(img_bytes).decode('utf-8')
+                        messages_content.append({
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/jpeg;base64,{base64_image}"
+                            }
+                        })
 
-                    for model_name in modelos_a_probar:
-                        try:
-                            response = client.models.generate_content(
-                                model=model_name,
-                                contents=contents,
-                                config=types.GenerateContentConfig(response_mime_type="application/json")
-                            )
-                            if response and response.text:
-                                break
-                        except Exception as err:
-                            last_error = err
-                            continue
+                    completion = client.chat.completions.create(
+                        model="llama-3.2-11b-vision-preview",
+                        messages=[{"role": "user", "content": messages_content}],
+                        temperature=0.1,
+                        response_format={"type": "json_object"}
+                    )
 
-                    if not response:
-                        raise last_error
+                    response_text = completion.choices[0].message.content
+                    extracted_data = json.loads(response_text)
 
-                    extracted_data = json.loads(response.text)
                     for key, val in extracted_data.items():
-                        if val is not None and val != 0:
+                        if val is not None and val != 0 and val != 0.0:
                             st.session_state["datos_viaje"][key] = val
 
                     st.session_state["form_version"] += 1
                     st.rerun()
 
                 except Exception as e:
-                    err_msg = str(e)
-                    if "429" in err_msg or "RESOURCE_EXHAUSTED" in err_msg:
-                        st.error("❌ Tu API Key actual alcanzó el límite o no tiene cuota gratuita habilitada.")
-                        st.info("👉 Solución: Genera una clave nueva en un nuevo proyecto en https://aistudio.google.com/")
-                    else:
-                        st.error(f"Error de conexión con la API: {err_msg}")
+                    st.error(f"Error al conectar con Groq: {str(e)}")
 
     st.markdown("---")
     st.subheader("2. Edición y Completado Manual de Presupuesto")
