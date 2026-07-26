@@ -69,28 +69,17 @@ if "GROQ_API_KEY" in st.secrets:
 
 if api_key:
     st.sidebar.success("🔑 API Key cargada automáticamente")
-    user_key = st.sidebar.text_input("Groq API Key (opcional si deseas cambiarla)", value=api_key, type="password")
+    user_key = st.sidebar.text_input("Groq API Key (opcional)", value=api_key, type="password")
     api_key = user_key
 else:
     api_key = st.sidebar.text_input("Ingresa tu Groq API Key (gsk_...)", type="password", help="Obtenla gratis en console.groq.com")
 
-# SELECCIÓN Y CONFIGURACIÓN DE MODELO
+# SELECCIÓN Y CONFIGURACIÓN DE MODELOS
 st.sidebar.markdown("---")
-st.sidebar.subheader("🤖 Modelo de Visión Groq")
+st.sidebar.subheader("🤖 Configuración de IA")
 
-opcion_modelo = st.sidebar.selectbox(
-    "Selecciona o escribe el modelo:",
-    [
-        "llama-3.2-11b-vision-instruct",
-        "Escribir otro modelo..."
-    ],
-    index=0
-)
-
-if opcion_modelo == "Escribir otro modelo...":
-    modelo_vision = st.sidebar.text_input("Identificador exacto del modelo Groq:", value="llama-3.2-11b-vision-instruct")
-else:
-    modelo_vision = opcion_modelo
+modelo_vision_defecto = st.sidebar.text_input("Modelo para Imágenes (Visión):", value="llama-3.2-11b-vision-instruct")
+modelo_texto_defecto = st.sidebar.text_input("Modelo para Texto (Sin imagen):", value="llama-3.3-70b-versatile")
 
 # Control de versión para refrescar formulario
 if "form_version" not in st.session_state:
@@ -247,7 +236,13 @@ if menu == "🧮 Crear Presupuesto":
         elif not (uploaded_image or email_text or web_url):
             st.warning("⚠️ Debes proporcionar al menos una fuente de datos.")
         else:
-            with st.spinner(f"Analizando información con el modelo '{modelo_vision}'..."):
+            # Seleccionar modelo adecuado según si hay imagen o no
+            if uploaded_image:
+                modelo_a_usar = modelo_vision_defecto
+            else:
+                modelo_a_usar = modelo_texto_defecto
+
+            with st.spinner(f"Analizando información con el modelo '{modelo_a_usar}'..."):
                 try:
                     client = Groq(api_key=api_key)
                     
@@ -273,6 +268,7 @@ if menu == "🧮 Crear Presupuesto":
                     
                     messages_content.append({"type": "text", "text": prompt_text})
 
+                    # Solo se adjunta el bloque de imagen si se subió un archivo y el modelo lo soporta
                     if uploaded_image:
                         img_bytes = uploaded_image.getvalue()
                         base64_image = base64.b64encode(img_bytes).decode('utf-8')
@@ -284,7 +280,7 @@ if menu == "🧮 Crear Presupuesto":
                         })
 
                     completion = client.chat.completions.create(
-                        model=modelo_vision,
+                        model=modelo_a_usar,
                         messages=[{"role": "user", "content": messages_content}],
                         temperature=0.1,
                         response_format={"type": "json_object"}
@@ -301,8 +297,7 @@ if menu == "🧮 Crear Presupuesto":
                     st.rerun()
 
                 except Exception as e:
-                    st.error(f"Error al conectar con Groq ({modelo_vision}): {str(e)}")
-                    st.info("💡 Si deseas probar otro modelo activo, consulta console.groq.com/docs/models y escríbelo en la barra lateral eligiendo 'Escribir otro modelo...'.")
+                    st.error(f"Error al conectar con Groq ({modelo_a_usar}): {str(e)}")
 
     st.markdown("---")
     st.subheader("2. Edición y Completado Manual de Presupuesto")
@@ -403,3 +398,4 @@ elif menu == "📜 Historial Guardado":
         st.info("Aún no has guardado presupuestos en la base de datos.")
     else:
         st.dataframe(df_historial, use_container_width=True)
+
