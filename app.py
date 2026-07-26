@@ -1,13 +1,13 @@
-import streamlit as st
-import pandas as pd
 import json
 import io
 import sqlite3
+import streamlit as st
+import pandas as pd
 from PIL import Image
 from google import genai
 from google.genai import types
 import openpyxl
-from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from openpyxl.styles import Font, PatternFill
 from openpyxl.utils import get_column_letter
 from xhtml2pdf import pisa
 
@@ -63,7 +63,7 @@ st.sidebar.markdown("---")
 st.sidebar.header("⚙️ Configuración")
 api_key = st.sidebar.text_input("Ingresa tu Gemini API Key", type="password", help="Obtenla gratis en Google AI Studio")
 
-# Control de versión para refrescar formulario al subir nueva imagen
+# Control de versión para refrescar formulario
 if "form_version" not in st.session_state:
     st.session_state["form_version"] = 0
 
@@ -200,7 +200,6 @@ def generar_pdf(datos, total_calc):
     pisa.CreatePDF(html_content, dest=output)
     return output.getvalue()
 
-
 # --- VISTA 1: CREAR PRESUPUESTO ---
 if menu == "🧮 Crear Presupuesto":
     st.subheader("1. Carga de Documentos y Fuentes de Información")
@@ -237,8 +236,8 @@ if menu == "🧮 Crear Presupuesto":
                     """
                     contents.append(prompt)
 
-                    # Reintentos automáticos con modelos disponibles
-                    modelos_a_probar = ["gemini-2.0-flash", "gemini-1.5-flash"]
+                    # Modelos a intentar en orden de preferencia
+                    modelos_a_probar = ["gemini-2.5-flash", "gemini-2.0-flash"]
                     response = None
                     last_error = None
 
@@ -263,13 +262,16 @@ if menu == "🧮 Crear Presupuesto":
                         if val is not None and val != 0:
                             st.session_state["datos_viaje"][key] = val
 
-                    # Forzar actualización del formulario con los nuevos datos
                     st.session_state["form_version"] += 1
                     st.rerun()
 
                 except Exception as e:
-                    st.error(f"Error de conexión con la API: {str(e)}")
-                    st.info("💡 Si el problema persiste, genera una nueva clave en Google AI Studio.")
+                    err_msg = str(e)
+                    if "429" in err_msg or "RESOURCE_EXHAUSTED" in err_msg:
+                        st.error("❌ Tu API Key actual alcanzó el límite o no tiene cuota gratuita habilitada.")
+                        st.info("👉 Solución: Genera una clave nueva en un nuevo proyecto en https://aistudio.google.com/")
+                    else:
+                        st.error(f"Error de conexión con la API: {err_msg}")
 
     st.markdown("---")
     st.subheader("2. Edición y Completado Manual de Presupuesto")
