@@ -238,7 +238,7 @@ if menu == "🧮 Crear Presupuesto":
                     contents.append(prompt)
 
                     response = client.models.generate_content(
-                        model="gemini-2.0-flash",
+                        model="gemini-1.5-flash",
                         contents=contents,
                         config=types.GenerateContentConfig(response_mime_type="application/json")
                     )
