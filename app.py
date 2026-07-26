@@ -78,12 +78,10 @@ else:
 st.sidebar.markdown("---")
 st.sidebar.subheader("🤖 Modelo de Visión Groq")
 
-# Permite ingresar el modelo libremente o seleccionar las opciones estándar
 opcion_modelo = st.sidebar.selectbox(
     "Selecciona o escribe el modelo:",
     [
         "llama-3.2-11b-vision-instruct",
-        "llama-3.2-90b-vision-instruct",
         "Escribir otro modelo..."
     ],
     index=0
@@ -304,7 +302,7 @@ if menu == "🧮 Crear Presupuesto":
 
                 except Exception as e:
                     st.error(f"Error al conectar con Groq ({modelo_vision}): {str(e)}")
-                    st.info("💡 Si el modelo fue retirado por Groq, consulta la lista activa en console.groq.com/docs/models y escribe el nombre en el panel lateral.")
+                    st.info("💡 Si deseas probar otro modelo activo, consulta console.groq.com/docs/models y escríbelo en la barra lateral eligiendo 'Escribir otro modelo...'.")
 
     st.markdown("---")
     st.subheader("2. Edición y Completado Manual de Presupuesto")
@@ -405,4 +403,3 @@ elif menu == "📜 Historial Guardado":
         st.info("Aún no has guardado presupuestos en la base de datos.")
     else:
         st.dataframe(df_historial, use_container_width=True)
-                                                                        
