@@ -238,7 +238,7 @@ if menu == "🧮 Crear Presupuesto":
                     contents.append(prompt)
 
                     # Reintentos automáticos con modelos disponibles
-                    modelos_a_probar = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"]
+                    modelos_a_probar = ["gemini-2.0-flash", "gemini-1.5-flash"]
                     response = None
                     last_error = None
 
