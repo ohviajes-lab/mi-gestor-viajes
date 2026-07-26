@@ -74,13 +74,21 @@ if api_key:
 else:
     api_key = st.sidebar.text_input("Ingresa tu Groq API Key (gsk_...)", type="password", help="Obtenla gratis en console.groq.com")
 
-# SELECCIÓN DE MODELO DE VISIÓN
-modelo_vision = st.sidebar.selectbox(
+# SELECCIÓN Y CONFIGURACIÓN DE MODELO
+modelo_seleccionado = st.sidebar.selectbox(
     "🤖 Modelo de Visión Groq",
-    ["llama-3.2-11b-vision-preview", "llama-3.2-90b-vision-preview"],
-    index=0,
-    help="11B es más rápido; 90B tiene mayor precisión para imágenes con mucho texto o letra pequeña."
+    [
+        "llama-3.2-11b-vision-preview",
+        "llama-3.2-11b-vision-instruct",
+        "Otro (ingresar manualmente)"
+    ],
+    index=0
 )
+
+if modelo_seleccionado == "Otro (ingresar manualmente)":
+    modelo_vision = st.sidebar.text_input("Nombre del Modelo Groq", value="llama-3.2-11b-vision-preview")
+else:
+    modelo_vision = modelo_seleccionado
 
 # Control de versión para refrescar formulario
 if "form_version" not in st.session_state:
