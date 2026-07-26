@@ -1,5 +1,5 @@
 import streamlit as st
-import pandas as pd
+import pandas as pdif st.
 import json
 import io
 import sqlite3
@@ -213,7 +213,7 @@ if menu == "🧮 Crear Presupuesto":
     with col_right:
         email_text = st.text_area("📧 Texto de Correo Electrónico / Notas", height=140, placeholder="Pega aquí el contenido del mail de la agencia...")
 
-    if st.button("🔍 Extraer Datos con IA (Gemini)"):
+   if st.button("🔍 Extraer Datos con IA (Gemini)"):
         if not api_key:
             st.error("⚠️ Por favor ingresa tu API Key de Gemini en el panel lateral.")
         elif not (uploaded_image or email_text or web_url):
@@ -237,11 +237,26 @@ if menu == "🧮 Crear Presupuesto":
                     """
                     contents.append(prompt)
 
-                    response = client.models.generate_content(
-                        model="gemini-1.5-flash",
-                        contents=contents,
-                        config=types.GenerateContentConfig(response_mime_type="application/json")
-                    )
+                    # Lista de modelos alternativos a probar automáticamente
+                    modelos_a_probar = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash-latest"]
+                    response = None
+                    last_error = None
+
+                    for model_name in modelos_a_probar:
+                        try:
+                            response = client.models.generate_content(
+                                model=model_name,
+                                contents=contents,
+                                config=types.GenerateContentConfig(response_mime_type="application/json")
+                            )
+                            if response and response.text:
+                                break
+                        except Exception as err:
+                            last_error = err
+                            continue
+
+                    if not response:
+                        raise last_error
 
                     extracted_data = json.loads(response.text)
                     for key, val in extracted_data.items():
@@ -253,7 +268,10 @@ if menu == "🧮 Crear Presupuesto":
                     st.rerun()
 
                 except Exception as e:
-                    st.error(f"Error: {str(e)}")
+                    st.error(f"Error de conexión con la API: {str(e)}")
+                    st.info("💡 Si el problema persiste, genera una nueva clave en Google AI Studio.")
+
+                   
 
     st.markdown("---")
     st.subheader("2. Edición y Completado Manual de Presupuesto")
