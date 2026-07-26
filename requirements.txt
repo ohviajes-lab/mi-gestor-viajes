@@ -1,6 +1,6 @@
 streamlit
-pandas
+google-genai
 openpyxl
+pandas
+pillow
 xhtml2pdf
-Pillow
-groq
