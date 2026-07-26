@@ -1,5 +1,5 @@
 import streamlit as st
-import pandas as pdif st.
+import pandas as pd
 import json
 import io
 import sqlite3
@@ -213,7 +213,7 @@ if menu == "🧮 Crear Presupuesto":
     with col_right:
         email_text = st.text_area("📧 Texto de Correo Electrónico / Notas", height=140, placeholder="Pega aquí el contenido del mail de la agencia...")
 
-   if st.button("🔍 Extraer Datos con IA (Gemini)"):
+    if st.button("🔍 Extraer Datos con IA (Gemini)"):
         if not api_key:
             st.error("⚠️ Por favor ingresa tu API Key de Gemini en el panel lateral.")
         elif not (uploaded_image or email_text or web_url):
@@ -237,8 +237,8 @@ if menu == "🧮 Crear Presupuesto":
                     """
                     contents.append(prompt)
 
-                    # Lista de modelos alternativos a probar automáticamente
-                    modelos_a_probar = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash-latest"]
+                    # Reintentos automáticos con modelos disponibles
+                    modelos_a_probar = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"]
                     response = None
                     last_error = None
 
@@ -270,8 +270,6 @@ if menu == "🧮 Crear Presupuesto":
                 except Exception as e:
                     st.error(f"Error de conexión con la API: {str(e)}")
                     st.info("💡 Si el problema persiste, genera una nueva clave en Google AI Studio.")
-
-                   
 
     st.markdown("---")
     st.subheader("2. Edición y Completado Manual de Presupuesto")
