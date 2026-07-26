@@ -63,16 +63,10 @@ st.sidebar.markdown("---")
 st.sidebar.header("⚙️ Configuración")
 api_key = st.sidebar.text_input("Ingresa tu Gemini API Key", type="password", help="Obtenla gratis en Google AI Studio")
 
-# Session State inicial
-if "form_version" not in st.session_state:
-# --- DICCIONARIO INICIAL Y CONTROL DE ESTADO ---
+# Control de versión para refrescar formulario al subir nueva imagen
 if "form_version" not in st.session_state:
     st.session_state["form_version"] = 0
 
-if "datos_viaje" not in st.session_state:
-    st.session_state["datos_viaje"] = {
-        # ... (tus datos por defecto) ...
-    }
 if "datos_viaje" not in st.session_state:
     st.session_state["datos_viaje"] = {
         "destino": "Costa Rica",
@@ -254,77 +248,54 @@ if menu == "🧮 Crear Presupuesto":
                         if val is not None and val != 0:
                             st.session_state["datos_viaje"][key] = val
 
-                    st.success("✨ ¡Datos extraídos con éxito!")
-# Actualizar los datos extraídos
-                for key, val in extracted_data.items():
-                    if val is not None and val != 0:
-                        st.session_state["datos_viaje"][key] = val
-
-                # 💡 AGREGAR ESTAS 2 LÍNEAS AQUÍ:
-                st.session_state["form_version"] += 1
-                st.rerun()
-
-            except Exception as e:
-                st.error(f"Error: {str(e)}")
+                    # Forzar actualización del formulario con los nuevos datos
+                    st.session_state["form_version"] += 1
+                    st.rerun()
 
                 except Exception as e:
                     st.error(f"Error: {str(e)}")
 
     st.markdown("---")
     st.subheader("2. Edición y Completado Manual de Presupuesto")
-v = st.session_state["form_version"]
+
+    v = st.session_state["form_version"]
 
     with st.form("form_presupuesto"):
         st.markdown("#### 📌 Datos Generales del Viaje")
         c1, c2, c3, c4 = st.columns(4)
-        with c1: destino = st.text_input("Destino", value=st.session_state["datos_viaje"]["destino"], key=f"dest_{v}")
-        with c2: fecha_salida = st.text_input("Fecha de Salida", value=st.session_state["datos_viaje"]["fecha_salida"], key=f"fec_{v}")
-        with c3: duracion = st.text_input("Duración", value=st.session_state["datos_viaje"]["dur_{v}"] if "dur_{v}" in st.session_state else st.session_state["datos_viaje"]["duracion"], key=f"dur_{v}")
-        with c4: operador = st.text_input("Operador / Agencia", value=st.session_state["datos_viaje"]["operador"], key=f"ope_{v}")
+        with c1:
+            destino = st.text_input("Destino", value=st.session_state["datos_viaje"]["destino"], key=f"dest_{v}")
+        with c2:
+            fecha_salida = st.text_input("Fecha de Salida", value=st.session_state["datos_viaje"]["fecha_salida"], key=f"fec_{v}")
+        with c3:
+            duracion = st.text_input("Duración", value=st.session_state["datos_viaje"]["duracion"], key=f"dur_{v}")
+        with c4:
+            operador = st.text_input("Operador / Agencia", value=st.session_state["datos_viaje"]["operador"], key=f"ope_{v}")
 
         st.markdown("#### 💳 Costos Confirmados")
         col_a, col_b, col_c, col_d = st.columns(4)
-        with col_a: precio_base = st.number_input("Paquete Base (USD)", value=float(st.session_state["datos_viaje"]["precio_base"]), key=f"pbase_{v}")
-        with col_b: impuestos_aereo = st.number_input("Impuestos Aéreos (USD)", value=float(st.session_state["datos_viaje"]["impuestos_aereo"]), key=f"imp_{v}")
-        with col_c: cuotas_cant = st.number_input("Cantidad de Cuotas", value=int(st.session_state["datos_viaje"]["cuotas_cant"]), key=f"ccant_{v}")
-        with col_d: cuota_monto = st.number_input("Monto Cuota (USD)", value=float(st.session_state["datos_viaje"]["cuota_monto"]), key=f"cmont_{v}")
+        with col_a:
+            precio_base = st.number_input("Paquete Base (USD)", value=float(st.session_state["datos_viaje"]["precio_base"]), key=f"pbase_{v}")
+        with col_b:
+            impuestos_aereo = st.number_input("Impuestos Aéreos (USD)", value=float(st.session_state["datos_viaje"]["impuestos_aereo"]), key=f"imp_{v}")
+        with col_c:
+            cuotas_cant = st.number_input("Cantidad de Cuotas", value=int(st.session_state["datos_viaje"]["cuotas_cant"]), key=f"ccant_{v}")
+        with col_d:
+            cuota_monto = st.number_input("Monto Cuota (USD)", value=float(st.session_state["datos_viaje"]["cuota_monto"]), key=f"cmont_{v}")
 
         st.markdown("#### ✍️ Estimaciones Manuales")
         col_e, col_f, col_g, col_h = st.columns(4)
-        with col_e: equipaje_extra = st.number_input("Equipaje Facturado (USD)", value=float(st.session_state["datos_viaje"]["equipaje_extra"]), key=f"eq_{v}")
-        with col_f: comidas_extra = st.number_input("Comidas no incluidas (USD)", value=float(st.session_state["datos_viaje"]["comidas_extra"]), key=f"com_{v}")
-        with col_g: excursiones_extra = st.number_input("Tours Extra (USD)", value=float(st.session_state["datos_viaje"]["excursiones_extra"]), key=f"exc_{v}")
-        with col_h: seguro_medico = st.number_input("Seguro Médico (USD)", value=float(st.session_state["datos_viaje"]["seguro_medico"]), key=f"seg_{v}")
+        with col_e:
+            equipaje_extra = st.number_input("Equipaje Facturado (USD)", value=float(st.session_state["datos_viaje"]["equipaje_extra"]), key=f"eq_{v}")
+        with col_f:
+            comidas_extra = st.number_input("Comidas no incluidas (USD)", value=float(st.session_state["datos_viaje"]["comidas_extra"]), key=f"com_{v}")
+        with col_g:
+            excursiones_extra = st.number_input("Tours Extra (USD)", value=float(st.session_state["datos_viaje"]["excursiones_extra"]), key=f"exc_{v}")
+        with col_h:
+            seguro_medico = st.number_input("Seguro Médico (USD)", value=float(st.session_state["datos_viaje"]["seguro_medico"]), key=f"seg_{v}")
 
         gastos_personales = st.number_input("Propinas e Imprevistos (USD)", value=float(st.session_state["datos_viaje"]["gastos_personales"]), key=f"gpers_{v}")
         notas = st.text_area("Observaciones / Servicios Incluidos", value=st.session_state["datos_viaje"]["notas"], key=f"not_{v}")
-
-        btn_guardar = st.form_submit_button("🧮 Recalcular Presupuesto y Preparar Descargas")
-
-    with st.form("form_presupuesto"):
-        st.markdown("#### 📌 Datos Generales del Viaje")
-        c1, c2, c3, c4 = st.columns(4)
-        with c1: destino = st.text_input("Destino", value=st.session_state["datos_viaje"]["destino"])
-        with c2: fecha_salida = st.text_input("Fecha de Salida", value=st.session_state["datos_viaje"]["fecha_salida"])
-        with c3: duracion = st.text_input("Duración", value=st.session_state["datos_viaje"]["duracion"])
-        with c4: operador = st.text_input("Operador / Agencia", value=st.session_state["datos_viaje"]["operador"])
-
-        st.markdown("#### 💳 Costos Confirmados")
-        col_a, col_b, col_c, col_d = st.columns(4)
-        with col_a: precio_base = st.number_input("Paquete Base (USD)", value=float(st.session_state["datos_viaje"]["precio_base"]))
-        with col_b: impuestos_aereo = st.number_input("Impuestos Aéreos (USD)", value=float(st.session_state["datos_viaje"]["impuestos_aereo"]))
-        with col_c: cuotas_cant = st.number_input("Cantidad de Cuotas", value=int(st.session_state["datos_viaje"]["cuotas_cant"]))
-        with col_d: cuota_monto = st.number_input("Monto Cuota (USD)", value=float(st.session_state["datos_viaje"]["cuota_monto"]))
-
-        st.markdown("#### ✍️ Estimaciones Manuales")
-        col_e, col_f, col_g, col_h = st.columns(4)
-        with col_e: equipaje_extra = st.number_input("Equipaje Facturado (USD)", value=float(st.session_state["datos_viaje"]["equipaje_extra"]))
-        with col_f: comidas_extra = st.number_input("Comidas no incluidas (USD)", value=float(st.session_state["datos_viaje"]["comidas_extra"]))
-        with col_g: excursiones_extra = st.number_input("Tours Extra (USD)", value=float(st.session_state["datos_viaje"]["excursiones_extra"]))
-        with col_h: seguro_medico = st.number_input("Seguro Médico (USD)", value=float(st.session_state["datos_viaje"]["seguro_medico"]))
-
-        gastos_personales = st.number_input("Propinas e Imprevistos (USD)", value=float(st.session_state["datos_viaje"]["gastos_personales"]))
-        notas = st.text_area("Observaciones / Servicios Incluidos", value=st.session_state["datos_viaje"]["notas"])
 
         btn_guardar = st.form_submit_button("🧮 Recalcular Presupuesto y Preparar Descargas")
 
@@ -347,7 +318,6 @@ v = st.session_state["form_version"]
     with m2: st.metric("Paquete Base (Promo)", f"USD ${(precio_base + impuestos_aereo):,.2f}")
     with m3: st.metric("Gastos Extras (Manuales)", f"USD ${(total_calculado - (precio_base + impuestos_aereo)):,.2f}")
 
-    # Botón de guardado en Base de Datos
     if st.button("💾 Guardar este Presupuesto en la Base de Datos"):
         guardar_en_db(datos_actuales, total_calculado)
         st.success("✅ ¡Presupuesto guardado correctamente en la Base de Datos!")
